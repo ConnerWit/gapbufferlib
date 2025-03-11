@@ -9,23 +9,30 @@ int gap_right;
 int size;
 
 void initGaps() {
-    int gap_size = 10;
-    int gap_left = 0;
-    int gap_right = gap_size - gap_left-1;
-    int size = 10;
+    gap_size = 10;
+    gap_left = 0;
+    gap_right = gap_size - gap_left-1;
+    size = 10;
 }
 
 void grow(int k, int position) {
     char a[size];
 
     for (int i = 0; i < size; i++) {
-        a[i - position] = buffer[i];
+        a[i] = buffer[i];
+    }
+    for (int i = 0; i < k; i++) {
+        buffer[position + i] = '_';
     }
 
-    for (int i = 0; i < k; i++) {
-        buffer[i + position] = '_';
+    for (int i = position; i < size; i++) {
+        buffer[i + k] = a[i];
     }
+
+    size += k;
+    gap_right += k;
 }
+
 
 void left(int position) {
     while(position < gap_left) {
@@ -64,8 +71,7 @@ void insert(char input[5], int position) {
 
     while(i < len) {
         if(gap_right == gap_left) {
-            int k = 10;
-            grow(k, position);
+            grow(10, gap_left);
         }
 
         buffer[gap_left] = input[i];
@@ -90,10 +96,25 @@ int main() {
     }
     printf("\n");
 
-    char input[5] = "hello";
+    char input[1048] = "hello !";
     int position = 0;
 
     insert(input, position);
+
+    printf("\nInserting a string to buffer\n'hello'\noutput:\n");
+    for (int i = 0; i < size; i++) {
+        printf("%c ", buffer[i]);
+    }
+
+    strcpy(input, "bro ");
+    position = 0;
+
+    insert(input, position);
+
+    printf("\n\ninserting a string to buffer\n: world\noutput:\n");
+    for(int i = 0; i < size; i++) {
+        printf("%c ", buffer[i]);
+    }
 
     return 0;
 }
