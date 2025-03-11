@@ -111,7 +111,7 @@ int main() {
 
     insert(input, position);
 
-    printf("\n\ninserting a string to buffer\n: world\noutput:\n");
+    printf("\n\ninserting a string to buffer\n'world'\noutput:\n");
     for(int i = 0; i < size; i++) {
         printf("%c ", buffer[i]);
     }
