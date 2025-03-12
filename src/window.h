@@ -3,6 +3,6 @@
 
 #include <windows.h>
 
-int RunWindow(HINSTANCE hInstance, int nCmdShow);
+int RunCedit(HINSTANCE hInstance, int nCmdShow);
 
 #endif // WINDOW_H
