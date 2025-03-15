@@ -1,40 +1,32 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 
-void openFile(char *filename) {
-    system("cls");
-    FILE *file = fopen(filename, "a+");
-
-    char line[256];
-
-    if (file != NULL) {
-        while (fgets(line, sizeof(line), file)) {
-            printf("%s", line);
-        }
-        fclose(file);
-    } else {
-        fprintf(stderr, "unable to open file\n");
+void editLine(int currentLine, char *buffer) {
+    for (int i = 0; i < currentLine; i++) {
+        buffer = strchr(buffer, '\n') + 1;
     }
+
+    char *lineEnd = strchr(buffer, '\n');
+    char saved[1034] = {0};
+    strcpy(saved, lineEnd);
+    scanf("%s", buffer);
+    strcpy(buffer + strlen(buffer), saved);
 }
 
-void newFile(char *filename) {
-    system("cls");
-    FILE *file = fopen(filename, "w");
-}
+int main(int argc, char** argv) {
+    FILE *f = fopen(argv[1], "r");
+    char buffer[1024] = {0};
+    fread(buffer, 1024, 1, f);
+    fclose(f);
+    printf("content:\n%s\n", buffer);
+    int currentLine = 0;
+    scanf("%d", &currentLine);
 
-int main() {
-    system("cls");
-    printf("CEDIT 2025\nenter filename to open / create: ");
-    char filename[256];
-    scanf("%s", filename);
+    editLine(currentLine, buffer);
 
-    FILE *file = fopen(filename, "r");
+    f = fopen(argv[1], "w");
+    fwrite(buffer, strlen(buffer), 1, f);
+    fclose(f);
 
-    if (file != NULL) {
-        openFile(filename);
-    } else {
-        newFile(filename);
-    }
-    
     return 0;
 }
