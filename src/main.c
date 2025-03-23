@@ -1,72 +1,85 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define GAP_SIZE 10
-#define GAP_LEFT 0
-#define GAP_RIGHT (GAP_SIZE - GAP_LEFT-1)
+struct TupleInsert {
+    char string;
+    int num;
+};
 
-char buffer[1024];
-int size = 10;
+int initGaps() {
+    int gap_size = 10;
+    int gap_left = 0;
+    int gap_right = gap_size - gap_left - 1;
 
-void grow(int k, int pos) {
-    char a[size];
-
-    for (int i = pos; i < size; i++) {
-        a[i - pos] = buffer[i];
-    }
-    for (int i = 0; i < k; i++) {
-        buffer[i + pos] = '_';
-    }
-    for (int i = 0; i < pos + k; i++) {
-        buffer[pos + k + i] = a[i];
-    }
-    size += k;
-    GAP_RIGHT += k;
+    return gap_size, gap_left, gap_right;
 }
 
-void insert(char *filebuffer, int pos, int len) {
-    int i = 0;
-    int gap_left = GAP_LEFT;
-    int gap_right = GAP_RIGHT;
+char initBuffer() {
+    FILE *file = fopen("testfile.c", "r");
+    if(file == NULL) {
+        perror("error opening file");
+        return 1;
+    }
 
-    while (i < len) {
-        if (GAP_RIGHT == GAP_LEFT) {
-            int k = 10;
-            grow(k, pos);
+    char buffer[1024];
+    int i = 0, c;
+    while((c = fgetc(file)) != EOF) {
+        buffer[i] = c;
+        i++;
+    }
+
+    return *buffer;
+}
+
+int addGapLeft(int gap_left) {
+    int newGapLeft = gap_left + 1;
+    return newGapLeft;
+}
+
+struct TupleInsert insert(char *buffer, int pos, int gap_left, int gap_right) {
+    int len = strlen(buffer);
+    int i = 0;
+    char *gap_buffer = malloc(gap_left * sizeof(char));
+
+    if(pos != gap_left) {
+        //move cursor function
+    }
+
+    while(i < len) {
+        if(gap_right == gap_left) {
+            //grow gap function
         }
-        buffer[GAP_LEFT] = filebuffer[i];
-        gap_left++;
+        char *gap_buffer = realloc(gap_buffer, gap_left * sizeof(char));
+        gap_left = addGapLeft(gap_left);
         i++;
         pos++;
+
+        struct TupleInsert r = {*gap_buffer, gap_left};
+        return r;
+
+        if(!gap_buffer) {
+            perror("err allocating gap_buffer");
+            char errchar[5] = "error";
+            int errnum = 1;
+            struct TupleInsert err = {*errchar, errnum};
+            return err;
+        }
+        free(gap_buffer);
     }
 }
 
 int main() {
-    for (int i = 0; i < 10; i++) {
-        buffer[i] = '_';
-    }
-    printf("initialized gap buffer of size 10\n");
-    for(int i = 0; i < size; i++) {
-        printf("%c", buffer[i]);
-    }
-    printf("\n");
+    initBuffer();
+    char buffer = buffer;
 
-    FILE *file = fopen("testfile.c", "r");
-    if (file == NULL) {
-        perror("error opening file");
-        return 1;
-    }
-    char filebuffer[1024];
-    int i = 0, c;
-    while ((c = fgetc(file)) != EOF) {
-        filebuffer[i] = c;
-        i++;
-    }
+    initGaps();
+    int gap_left = gap_left;
+    int gap_right = gap_right;
+    
     int pos = 0;
 
-    printf("%s", filebuffer);
-
-    insert(filebuffer, pos, strlen(filebuffer));
+    insert(&buffer, pos, gap_left, gap_right);
 
     return 0;
 }
