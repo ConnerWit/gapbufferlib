@@ -6,20 +6,24 @@
 
 struct Rope {
 	char data[LEAF_LEN + 1];
-	int weight;
+	size_t weight;
   struct Rope *left;
   struct Rope *right;
 };
 
+void *allocCheck(void *ptr, size_t size) {
+  if(ptr == NULL) {
+    fprintf(stderr, "mem alloc fail", size);
+    exit(1);
+  }
+  return ptr;
+}
+
 struct Rope *initializeRope(char *string) {
-  int len = strlen(string);
+  size_t len = strlen(string);
   
   if(len <= LEAF_LEN) {
-    struct Rope *node = malloc(sizeof(struct Rope));
-    if(node == NULL) {
-      fprintf(stderr, "mem alloc fail 0\n");
-      exit(1);
-    }
+    struct Rope *node = allocCheck(malloc(sizeof(struct Rope)), sizeof(struct Rope));
 
     strcpy(node->data, string);
     node->weight = len;
@@ -29,16 +33,12 @@ struct Rope *initializeRope(char *string) {
     return node;
   }
 
-  int len1 = len / 2;
-  int len2 = len - len1;
+  size_t len1 = len / 2;
+  size_t len2 = len - len1;
 
-  char *s1 = malloc(len1 + 1);
-  char *s2 = malloc(len2 + 1);
+  char *s1 = allocCheck(malloc(len1 + 1), len1 + 1);
+  char *s2 = allocCheck(malloc(len2 + 1), len2 + 1);
 
-  if(s1 == NULL || s2 == NULL) {
-    fprintf(stderr, "mem alloc fail 1\n");
-    exit(1);
-  }
 
   strncpy(s1, string, len1);
   s1[len1] = '\0';
@@ -46,11 +46,7 @@ struct Rope *initializeRope(char *string) {
   strncpy(s2, string + len1, len2);
   s2[len2] = '\0';
 
-  struct Rope *node = malloc(sizeof(struct Rope));
-  if(node == NULL) {
-    fprintf(stderr, "mem alloc fail 2\n");
-    exit(1);
-  }
+  struct Rope *node = allocCheck(malloc(sizeof(struct Rope)), sizeof(struct Rope));
 
   node->data[0] = '\0';
   node->weight = len1;
@@ -66,17 +62,14 @@ struct Rope *initializeRope(char *string) {
   return node;
 }
 
-void printRope(struct Rope *root, int level) {
+void printRope(struct Rope *root, size_t level, char *output) {
   if(root == NULL) return;
 
-  for(int i = 0; i < level; i++) printf(" ");
-
   if(root->left == NULL && root->right == NULL) {
-    printf("leaf: \"%s\"\n", root->data);
+    strcat(output, root->data);
   } else {
-    printf("node: weight=%d\n", root->weight);
-    printRope(root->left, level + 1);
-    printRope(root->right, level + 1);
+    printRope(root->left, level + 1, output);
+    printRope(root->right, level + 1, output);
   }
 }
 
@@ -91,8 +84,13 @@ int main() {
   char string[] = "this is a string that i want to store inside a leaf node";
   struct Rope *root = initializeRope(string);
 
-  printf("\nrope:\n");
-  printRope(root, 0);
+  size_t len = strlen(string) + 1;
+  char *output = allocCheck(malloc(len), len);
+  output[0] = '\0';
+
+  printRope(root, 0, output);
+
+  printf("%s", output);
 
   freeRope(root);
 	return 0;
