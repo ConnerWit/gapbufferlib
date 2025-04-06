@@ -2,11 +2,11 @@ README file is utilized for planning
 
 project requirements:
 
-(MVP)
+phase 1:
 terminal based file editing/creation, efficient data structure to view, edit and store text
 
-(Lower priority features)
-built in file tree for navigation, syntax highlighting for languages (C/C++, Rust, Python, Javascript, CSS, HTML)
+phase 2:
+built in file tree for navigation, syntax highlighting for popular languages
 
-(Extension features)
+phase 3:
 customizable editor shortcuts, built in debugger    
