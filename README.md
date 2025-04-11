@@ -10,3 +10,13 @@ built in file tree for navigation, syntax highlighting for popular languages
 
 phase 3:
 customizable editor shortcuts, built in debugger    
+
+
+core functions:
+
+searching
+concatenation (check for rebalancing when depth difference exceeds 5)
+splitting
+insertion (splitting + concatenation * 2)
+deletion (splitting * 2 + concatenation)
+
