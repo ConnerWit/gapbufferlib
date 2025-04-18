@@ -90,6 +90,7 @@ Rope *concatenate(Rope *rope, Rope *secondRope) {
   resultRope->weight = rope->weight;
   resultRope->left = rope;
   resultRope->right  = secondRope;
+  
   //balanceCheck(resultRope);
 
   return resultRope;
