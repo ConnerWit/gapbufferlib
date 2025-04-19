@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define LEAF_LEN 5
+#define MAX_IMBALANCE 3
 
 typedef struct Rope {
 	char data[LEAF_LEN + 1];
@@ -77,21 +79,105 @@ Rope *initializeRope(char *str) {
   return node;
 }
 
-void balanceCheck(Rope *rope) {
-  //check if rebalancing is needed
-  //char *str = initializeString(rope);
-  //storeRope(rope, str);
-  //initializeRope(str);
+int getHeight(Rope *rope) {
+  if (rope == NULL) {
+    return 0;
+  }
+
+  if (rope->left == NULL && rope->right == NULL) {
+    return 1;
+  }
+
+  int leftHeight = getHeight(rope->left);
+  int rightHeight = getHeight(rope->right);
+
+  return 1 + (leftHeight > rightHeight ? leftHeight : rightHeight);
+}
+
+bool balanceCheck(Rope *rope) {
+  int leftHeight = getHeight(rope->left);
+  int rightHeight = getHeight(rope->right);
+
+  if (abs(leftHeight - rightHeight) > MAX_IMBALANCE) {
+    return false;
+  }
+
+  return true;
+}
+
+Rope *rotateRight(Rope *y) {
+  Rope *x = y->left;
+  Rope *T2 = x->right;
+
+  x->right = y;
+  y->left = T2;
+
+  y->weight = y->weight - x->weight;
+  if (T2 != NULL) {
+    y->weight += T2->weight;
+  }
+
+  return x;
+}
+
+Rope *rotateLeft(Rope *x) {
+  Rope *y = x->right;
+  Rope *T2 = y->left;
+
+  y->left = x;
+  x->right = T2;
+
+  Rope *xright = x->right;
+  Rope *yleft = y->left;
+
+  y->weight = x->weight - xright->weight;
+  if (yleft != NULL) {
+    y->weight += yleft->weight;
+  }
+
+  return y;
+}
+
+Rope *rebalance(Rope *root) {
+  int leftHeight = getHeight(root->left);
+  int rightHeight = getHeight(root->right);
+
+  if (leftHeight > rightHeight + MAX_IMBALANCE) {
+    Rope *leftChild = root->left;
+    int leftLeftHeight = getHeight(leftChild->left);
+    int leftRightHeight = getHeight(leftChild->right);
+
+    if (leftLeftHeight >= leftRightHeight) {
+      return rotateRight(root);
+    } else {
+      root->left = rotateLeft(leftChild);
+      return rotateRight(root);
+    }
+  } else if (rightHeight > leftHeight + MAX_IMBALANCE) {
+    Rope *rightChild = root->right;
+    int rightLeftHeight = getHeight(rightChild->left);
+    int rightRightHeight = getHeight(rightChild->right);
+
+    if (rightRightHeight >= rightLeftHeight) {
+      return rotateLeft(root);
+    } else {
+      root->right = rotateRight(rightChild);
+      return rotateLeft(root);
+    }
+  }
+  
+  return root;
 }
 
 Rope *concatenate(Rope *rope, Rope *secondRope) {
   Rope *resultRope = allocCheck(malloc(sizeof(Rope)));
-  resultRope->data[0] = '\0';
   resultRope->weight = rope->weight;
   resultRope->left = rope;
   resultRope->right  = secondRope;
   
-  //balanceCheck(resultRope);
+  if (!balanceCheck(resultRope)) {
+    resultRope = rebalance(resultRope);
+  }
 
   return resultRope;
 }
