@@ -23,15 +23,30 @@ void *allocCheck(void *ptr) {
 
 void freeRope(Rope *root) {
   if(root == NULL) return;
+
   freeRope(root->left);
   freeRope(root->right);
   free(root);
 }
 
-char *initializeString(Rope *rope) {
-  size_t len = rope->weight * 2;
-  char *output = allocCheck(malloc(len));
+size_t calculateRopeLength(Rope *root) {
+  if (root == NULL) return 0;
+
+  if (root->left == NULL && root->right == NULL) {
+    return strlen(root->data);
+  }
+
+  return calculateRopeLength(root->left) + calculateRopeLength(root->right);
+}
+
+char *initializeString(Rope *root) {
+  if (root == NULL) return 0;
+
+  size_t stringLength = calculateRopeLength(root) + 1;
+  char *output = allocCheck(malloc(stringLength));
   output[0] = '\0';
+
+  return output;
 }
 
 void storeRope(struct Rope *root, char *output) {
@@ -49,54 +64,53 @@ Rope *initializeRope(char *str) {
   size_t len = strlen(str);
   
   if(len <= LEAF_LEN) {
-    Rope *node = allocCheck(malloc(sizeof(Rope)));
-    strcpy(node->data, str);
-    node->weight = len;
-    node->left = NULL;
-    node->right = NULL;
-    return node;
+    Rope *leafNode = allocCheck(malloc(sizeof(Rope)));
+    strcpy(leafNode->data, str);
+    leafNode->weight = len;
+    leafNode->left = NULL;
+    leafNode->right = NULL;
+
+    return leafNode;
   }
 
   size_t len1 = len / 2;
   size_t len2 = len - len1;
 
-  char *s1 = allocCheck(malloc(len1 + 1));
-  char *s2 = allocCheck(malloc(len2 + 1));
+  char *str1 = allocCheck(malloc(len1 + 1));
+  char *str2 = allocCheck(malloc(len2 + 1));
 
-  strncpy(s1, str, len1);
-  s1[len1] = '\0';
-  strncpy(s2, str + len1, len2);
-  s2[len2] = '\0';
+  strncpy(str1, str, len1);
+  str1[len1] = '\0';
+  strncpy(str2, str + len1, len2);
+  str2[len2] = '\0';
 
   Rope *node = allocCheck(malloc(sizeof(Rope)));
   node->data[0] = '\0';
   node->weight = len1;
-  node->left = initializeRope(s1);
-  node->right = initializeRope(s2);
+  node->left = initializeRope(str1);
+  node->right = initializeRope(str2);
 
-  free(s1);
-  free(s2);
+  free(str1);
+  free(str2);
   return node;
 }
 
-int getHeight(Rope *rope) {
-  if (rope == NULL) {
-    return 0;
-  }
+int getHeight(Rope *root) {
+  if (root == NULL) return 0;
 
-  if (rope->left == NULL && rope->right == NULL) {
+  if (root->left == NULL && root->right == NULL) {
     return 1;
   }
 
-  int leftHeight = getHeight(rope->left);
-  int rightHeight = getHeight(rope->right);
+  int leftHeight = getHeight(root->left);
+  int rightHeight = getHeight(root->right);
 
   return 1 + (leftHeight > rightHeight ? leftHeight : rightHeight);
 }
 
-bool balanceCheck(Rope *rope) {
-  int leftHeight = getHeight(rope->left);
-  int rightHeight = getHeight(rope->right);
+bool isBalanced(Rope *root) {
+  int leftHeight = getHeight(root->left);
+  int rightHeight = getHeight(root->right);
 
   if (abs(leftHeight - rightHeight) > MAX_IMBALANCE) {
     return false;
@@ -105,45 +119,58 @@ bool balanceCheck(Rope *rope) {
   return true;
 }
 
+void updateWeight(Rope *root) {
+  if (root == NULL) return;
+
+  if (root->left == NULL) {
+        root->weight = 0;
+  } else if (root->left->left == NULL && root->left->right == NULL) {
+        root->weight = strlen(root->left->data);
+  } else {
+        root->weight = calculateRopeLength(root->left);
+  }
+}
+
 Rope *rotateRight(Rope *y) {
+  if (y == NULL || y->left == NULL) return y;
+
   Rope *x = y->left;
   Rope *T2 = x->right;
 
   x->right = y;
   y->left = T2;
 
-  y->weight = y->weight - x->weight;
-  if (T2 != NULL) {
-    y->weight += T2->weight;
-  }
+  updateWeight(y);
+  updateWeight(x);
 
   return x;
 }
 
 Rope *rotateLeft(Rope *x) {
+  if (x == NULL || x->right == NULL) return x;
+
   Rope *y = x->right;
   Rope *T2 = y->left;
 
   y->left = x;
   x->right = T2;
 
-  Rope *xright = x->right;
-  Rope *yleft = y->left;
-
-  y->weight = x->weight - xright->weight;
-  if (yleft != NULL) {
-    y->weight += yleft->weight;
-  }
+  updateWeight(x);
+  updateWeight(y);
 
   return y;
 }
 
 Rope *rebalance(Rope *root) {
+  if (root == NULL) return 0;
+
   int leftHeight = getHeight(root->left);
   int rightHeight = getHeight(root->right);
 
   if (leftHeight > rightHeight + MAX_IMBALANCE) {
     Rope *leftChild = root->left;
+    if (leftChild == NULL) return root;
+
     int leftLeftHeight = getHeight(leftChild->left);
     int leftRightHeight = getHeight(leftChild->right);
 
@@ -155,6 +182,8 @@ Rope *rebalance(Rope *root) {
     }
   } else if (rightHeight > leftHeight + MAX_IMBALANCE) {
     Rope *rightChild = root->right;
+    if (rightChild == NULL) return root;
+
     int rightLeftHeight = getHeight(rightChild->left);
     int rightRightHeight = getHeight(rightChild->right);
 
@@ -169,13 +198,17 @@ Rope *rebalance(Rope *root) {
   return root;
 }
 
-Rope *concatenate(Rope *rope, Rope *secondRope) {
+Rope *concatenate(Rope *first, Rope *second) {
+  if (first == NULL) return second;
+  if (second == NULL) return first;
+
   Rope *resultRope = allocCheck(malloc(sizeof(Rope)));
-  resultRope->weight = rope->weight;
-  resultRope->left = rope;
-  resultRope->right  = secondRope;
+  resultRope->data[0] = '\0';
+  resultRope->left = first;
+  resultRope->right  = second;
+  updateWeight(resultRope);
   
-  if (!balanceCheck(resultRope)) {
+  if (!isBalanced(resultRope)) {
     resultRope = rebalance(resultRope);
   }
 
@@ -203,13 +236,19 @@ void delete() {
   //concatenate first and last half
 }
 
+void printRope(Rope *root) {
+  if (root == NULL) return;
+
+  char *str = initializeString(root);
+  storeRope(root, str);
+  printf("%s", str);
+  free(str);
+}
+
 int main() {
   char str[100] = "this is a string i want to store in the new rope data structure.";
   Rope *rope = initializeRope(str);
-
-  char *output = initializeString(rope);
-  storeRope(rope, output);
-  printf("%s", output);
+  printRope(rope);
 
   freeRope(rope);
   return 0;
