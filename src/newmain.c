@@ -246,7 +246,7 @@ void printRope(Rope *root) {
 }
 
 int main() {
-  char str[100] = "this is a string i want to store in the new rope data structure.";
+  char str[100] = "this is a string i want to store in the new rope data structure";
   Rope *rope = initializeRope(str);
   printRope(rope);
 
