@@ -215,13 +215,33 @@ Rope *concatenate(Rope *first, Rope *second) {
   return resultRope;
 }
 
-void search() {
-  //find index of position given
+size_t search(Rope *root, size_t val) {
+  if (root == NULL) return 1;
+
+  if (root->right == NULL && root->left == NULL) {
+    return root->data[val];
+  }
+
+  if (val < root->weight) {
+    return search(root->left, val);
+  } else {
+    return search(root->right, val - root->weight);
+  }
 }
 
-void split() {
-  //search for index to split at
-  //split functionality
+void split(Rope *root, size_t val) {
+  if (root == NULL) return;
+
+  if (root->right == NULL && root->left == NULL) {
+    if (val == 0) {
+      return;
+    }
+    if (val >= root->weight) {
+      return;
+    }
+
+    //left_data = 
+  }
 }
 
 void insert() {
