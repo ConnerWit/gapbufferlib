@@ -1,22 +1,10 @@
-README file is utilized for planning
+# Cedit is a small code editor written in C.
 
-project requirements:
+This project is still a W.I.P. (for a long time lol). But I'm getting there, trust me.
 
-phase 1:
-terminal based file editing/creation, efficient data structure to view, edit and store text
+## Setting up
 
-phase 2:
-built in file tree for navigation, syntax highlighting for popular languages
+After cloning, simply type 'make' in the root directory to compile and run the project.
 
-phase 3:
-customizable editor shortcuts, built in debugger    
-
-
-core functions:
-
-searching
-concatenation (check for rebalancing when depth difference exceeds 5)
-splitting
-insertion (splitting + concatenation * 2)
-deletion (splitting * 2 + concatenation)
+(I'll probably be the only one setting this up but it's a good note to use for myself 😉)
 
