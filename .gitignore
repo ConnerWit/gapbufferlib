@@ -1,0 +1,4 @@
+build/
+*.exe
+*.out
+my_program
