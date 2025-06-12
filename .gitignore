@@ -1,4 +1,5 @@
+# windows build stuff
 build/
+
+# program
 *.exe
-*.out
-my_program
