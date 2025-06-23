@@ -244,19 +244,7 @@ size_t search(Rope *root, size_t val) {
 }
 
 void split(Rope *root, size_t val) {
-      if (root == NULL)
-            return;
 
-      if (root->right == NULL && root->left == NULL) {
-            if (val == 0) {
-                  return;
-            }
-            if (val >= root->weight) {
-                  return;
-            }
-
-            // left_data =
-      }
 }
 
 void insert() {
