@@ -1,31 +1,29 @@
-// This is currently a note block for my next prototype (mad scientist laugh)
-//
-// ROPE + GAP BUFFER CORE FUNCTIONS
-// 
-// ROPE STRUCTURE:
-// ropeSplit() - split at index
-// ropeConcat() - join two ropes  
-// ropeRebalance() - AVL rebalancing
-// ropeFree() - cleanup
-// 
-// GAP BUFFER LEAF:
-// leafInsert() - insert text at gap
-// leafDelete() - delete range
-// leafMoveGap() - relocate gap to cursor
-// leafGetChar() - get character at index
-// 
-// HYBRID OPERATIONS:
-// ropeInsert() - route insert to leaf/split
-// ropeDelete() - route delete to leaf/split  
-// ropeGetChar() - navigate tree for character
-// ropeLength() - cached total length
-// 
-// OPTIMIZATION:
-// ropeMarkDirty() - flag modified nodes
-// ropeUpdateWeights() - recalc dirty weights only
-// ropeShouldSplit() - check leaf size threshold
-// 
-// EDITOR INTERFACE:
-// ropeFind() - search pattern
-// ropeReplace() - replace text range
-// ropeGetLine() - extract line by number
+This is a note block for my next prototype (mad scientist laugh)
+
+ROPE + GAP BUFFER CORE FUNCTIONS
+
+ROPE STRUCTURE:
+ropeInit() - intialize rope
+ropeFree() - deallocate rope
+ropeSplit() - split at index
+ropeConcat() - join two ropes  
+ropeRebalance() - AVL rebalancing
+ropeSearch() - search index
+
+HYBRID OPERATIONS:
+ropeInsert() - route insert to leaf/split
+ropeDelete() - route delete to leaf/split  
+ropeGetChar() - navigate tree for character
+ropeLength() - cached total length
+
+GAP BUFFER LEAF:
+leafInsert() - insert text at gap
+leafDelete() - delete range
+leafMoveGap() - relocate gap to cursor
+leafGetChar() - get character at index
+
+OPTIMIZATION:
+ropeMarkDirty() - flag modified nodes
+ropeUpdateWeights() - recalc dirty weights only
+ropeShouldSplit() - check leaf size threshold
+

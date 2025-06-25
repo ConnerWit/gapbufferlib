@@ -5,12 +5,14 @@ ifeq ($(OS),Windows_NT)
     CD_AND_RUN := cd build &&
     EXECUTABLE := main_proj_file.exe
     RMDIR := if exist build rmdir /s /q build
+    NEWLINE := echo.
 else
     DETECTED_OS := $(shell uname -s)
     MKDIR := mkdir -p build
     CD_AND_RUN := cd build &&
     EXECUTABLE := main_proj_file
     RMDIR := rm -rf build
+    NEWLINE := echo
 endif
 
 # Default target
@@ -28,6 +30,7 @@ build: configure
 # Run the program
 run: build
 	$(CD_AND_RUN) ./$(EXECUTABLE)
+	@$(NEWLINE)
 
 # Clean build files
 clean:
