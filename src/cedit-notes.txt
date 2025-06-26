@@ -1,0 +1,12 @@
+this is a bit of a roadmap so i remember what to do
+
+controllers to finish:
+    rope controller
+    i/o controller
+    display controller
+    keybinds controller
+    can't think of more
+
+then centralize everything in a main file,
+each calling each others functionality
+

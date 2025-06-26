@@ -1,0 +1,20 @@
+rope + gap buffer core functions
+
+rope structure:
+    initalize rope
+    split the rope at index
+    concatenate rope (with proper rebalancing)
+    get total rope length
+
+gap buffer:
+    insert text inside leaf node
+    delete text inside leaf node
+    gap movement based on cursor
+    expand gap when it gets too small
+
+hybrid operations:
+    route operations to leaf vs rope level
+    trigger specific rope operations when leaf gets too big
+    update weights after modifications
+    marking nodes 'dirty' for lazy recalculations
+
