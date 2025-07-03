@@ -3,3 +3,4 @@ build/
 
 # program
 *.exe
+*.out
