@@ -193,6 +193,31 @@ Rope* ropeConcatBalanced(Rope* left, Rope* right) {
     }
 }
 
+Rope* insert(Rope* root, size_t index, const char* text) {
+    if (!root) return root;
+
+    Rope *left_tree = NULL, *right_tree = NULL;
+    ropeSplit(root, index, &left_tree, &right_tree);
+
+    Rope* new_node = ropeLeafFromBuffer(text, strlen(text));
+    Rope* combined = ropeConcatBalanced(left_tree, new_node);
+    Rope* result = ropeConcatBalanced(combined, right_tree);
+
+    return result;
+}
+
+Rope* delete(Rope* root, size_t range_start, size_t range_end) {
+    if (range_start >= range_end || !root) return root;
+
+    Rope *left_tree = NULL, *mid_tree = NULL, *right_tree = NULL;
+    ropeSplit(root, range_end, &left_tree, &right_tree);
+    ropeSplit(left_tree, range_start, &left_tree, &mid_tree);
+    Rope* result = ropeConcatBalanced(left_tree, right_tree);
+    
+    return result;
+}
+    
+
 void ropePrint(Rope* node) {
     if (!node) return;
 
