@@ -3,4 +3,4 @@ project(Cedit)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(main_proj_file src/rope-struct.c)
+add_executable(main_proj_file src/main.c)
