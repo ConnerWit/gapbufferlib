@@ -25,6 +25,7 @@ typedef struct {
     size_t buf_size;
     size_t gap_start;
     size_t gap_end;
+    size_t cursor_pos;
 } GapBuffer;
 
 void *allocCheck(void *ptr) {
@@ -34,6 +35,43 @@ void *allocCheck(void *ptr) {
       }
       return ptr;
 }
+
+GapBuffer *moveGap(GapBuffer *Buffer) {
+    size_t gap_distance = Buffer->gap_end - Buffer->gap_start;
+
+    if (Buffer->cursor_pos < Buffer->gap_start) {
+        
+    } else {
+
+    }
+
+    return Buffer;
+}
+
+GapBuffer *moveLeft(GapBuffer *Buffer, size_t to_move) {
+    size_t current_pos = Buffer->cursor_pos;
+
+    if (to_move > current_pos){
+        Buffer->cursor_pos = 0;
+    } else {
+        Buffer->cursor_pos = current_pos - to_move;
+    }
+
+    return Buffer;
+}
+
+GapBuffer *moveRight(GapBuffer *Buffer, size_t to_move) {
+    size_t current_pos = Buffer->cursor_pos;
+
+    if (current_pos + to_move >= Buffer->buf_size){
+        Buffer->cursor_pos = Buffer->buf_size;
+    } else {
+        Buffer->cursor_pos = current_pos + to_move;
+    }
+
+    return Buffer;
+}
+
 
 GapBuffer *initBuffer(const char *str) {
     size_t str_size = strlen(str);
@@ -46,6 +84,7 @@ GapBuffer *initBuffer(const char *str) {
 
     Buffer->gap_start = str_size;
     Buffer->gap_end = str_size + GAP_SIZE;
+    Buffer->cursor_pos = Buffer->gap_start;
 
     memset(Buffer->buffer + Buffer->gap_start, '_', GAP_SIZE);
     
