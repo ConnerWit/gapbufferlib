@@ -20,6 +20,7 @@ size_t GAP_SIZE = 6;
 typedef struct {
     char *buffer;
     size_t buf_size;
+    size_t text_size;
     size_t gap_start;
     size_t gap_end;
     size_t cursor_pos;
@@ -30,6 +31,8 @@ void *allocCheck(void *ptr) {
             fprintf(stderr, "mem alloc fail");
             exit(1);
       }
+
+
       return ptr;
 }
 
@@ -54,7 +57,6 @@ GapBuffer *moveGap(GapBuffer *Buffer) {
         Buffer->gap_end = Buffer->gap_start + gap_distance;
     }
 
-    memset(Buffer->buffer + Buffer->gap_start, '_', gap_distance);
 
     return Buffer;
 }
@@ -62,6 +64,8 @@ GapBuffer *moveGap(GapBuffer *Buffer) {
 size_t clamp(size_t value, size_t min, size_t max) {
     if (value < min) return min;
     if (value > max) return max;
+
+
     return value;
 }
 
@@ -71,6 +75,7 @@ GapBuffer *moveLeft(GapBuffer *Buffer, size_t to_move) {
     Buffer->cursor_pos = clamp(current_pos - to_move, 0, Buffer->buf_size);
 
     moveGap(Buffer);
+
 
     return Buffer;
 }
@@ -82,6 +87,7 @@ GapBuffer *moveRight(GapBuffer *Buffer, size_t to_move) {
 
     moveGap(Buffer);
 
+
     return Buffer;
 }
 
@@ -91,6 +97,7 @@ GapBuffer *initBuffer(const char *str) {
 
     GapBuffer *Buffer = allocCheck(malloc(sizeof(GapBuffer)));
     Buffer->buf_size = str_size + GAP_SIZE;
+    Buffer->text_size = str_size;
     Buffer->buffer = allocCheck(malloc(Buffer->buf_size));
 
     memcpy(Buffer->buffer, str, str_size);
@@ -99,22 +106,30 @@ GapBuffer *initBuffer(const char *str) {
     Buffer->gap_end = str_size + GAP_SIZE;
     Buffer->cursor_pos = Buffer->gap_start;
 
-    memset(Buffer->buffer + Buffer->gap_start, '_', GAP_SIZE);
-    
 
     return Buffer;
 }
 
+void printBuffer(GapBuffer *Buffer) {
+    fwrite(Buffer->buffer, 1, Buffer->gap_start, stdout);
+
+    printf("[GAP]");
+
+    size_t after_len = Buffer->text_size - Buffer->gap_start;
+    fwrite(Buffer->buffer + Buffer->gap_end, 1, after_len, stdout);
+
+    printf("\n");
+}
+
 int main() {
     char str[] = "kitten on pizza slice in space";
-
     GapBuffer *Buffer = initBuffer(str);
 
-    printf("current buffer:\n%s\n", Buffer->buffer);
+    printBuffer(Buffer);
 
-    moveLeft(Buffer, 4);
+    moveLeft(Buffer, 31);
 
-    printf("buffer after moving cursor to the left:\n%s\n", Buffer->buffer);
+    printBuffer(Buffer);
 
     free(Buffer->buffer);
     free(Buffer);
