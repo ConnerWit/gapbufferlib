@@ -37,60 +37,62 @@ void *allocCheck(void *ptr) {
 }
 
 GapBuffer *moveGap(GapBuffer *Buffer) {
-    size_t gap_distance = Buffer->gap_end - Buffer->gap_start;
-
-    if (Buffer->cursor_pos < Buffer->gap_start) {
-        memmove(
-                Buffer->buffer + Buffer->cursor_pos + gap_distance,
-                Buffer->buffer + Buffer->cursor_pos,
-                Buffer->gap_start - Buffer->cursor_pos
-                );
-        Buffer->gap_start = Buffer->cursor_pos;
-        Buffer->gap_end = Buffer->gap_start + gap_distance;
+    size_t gap_size = Buffer->gap_end - Buffer->gap_start;
+    
+    size_t physical_pos;
+    if (Buffer->cursor_pos <= Buffer->gap_start) {
+        physical_pos = Buffer->cursor_pos;
     } else {
+        physical_pos = Buffer->cursor_pos + gap_size;
+    }
+
+    if (physical_pos < Buffer->gap_start) {
+        size_t move_len = Buffer->gap_start - physical_pos;
+        memmove(
+                Buffer->buffer + physical_pos + gap_size,
+                Buffer->buffer + physical_pos,
+                move_len
+                );
+        Buffer->gap_start = physical_pos;
+        Buffer->gap_end = physical_pos + gap_size;
+    } else if (physical_pos > Buffer->gap_end) {
+        size_t move_len = physical_pos - Buffer->gap_end;
         memmove(
                 Buffer->buffer + Buffer->gap_start,
                 Buffer->buffer + Buffer->gap_end,
-                Buffer->cursor_pos - Buffer->gap_end
+                move_len
                );
-        Buffer->gap_start = Buffer->cursor_pos;
-        Buffer->gap_end = Buffer->gap_start + gap_distance;
+        Buffer->gap_start += move_len;
+        Buffer->gap_end += move_len;
     }
-
 
     return Buffer;
 }
 
-size_t clamp(size_t value, size_t min, size_t max) {
-    if (value < min) return min;
-    if (value > max) return max;
-
-
-    return value;
-}
-
 GapBuffer *moveLeft(GapBuffer *Buffer, size_t to_move) {
-    size_t current_pos = Buffer->cursor_pos;
-
-    Buffer->cursor_pos = clamp(current_pos - to_move, 0, Buffer->buf_size);
+    if (to_move >= Buffer->cursor_pos) {
+        Buffer->cursor_pos = 0;
+    } else {
+        Buffer->cursor_pos = Buffer->cursor_pos - to_move;
+    }
 
     moveGap(Buffer);
-
 
     return Buffer;
 }
 
 GapBuffer *moveRight(GapBuffer *Buffer, size_t to_move) {
-    size_t current_pos = Buffer->cursor_pos;
-
-    Buffer->cursor_pos = clamp(current_pos + to_move, 0, Buffer->buf_size);
+    if (to_move >= Buffer->text_size - Buffer->cursor_pos) {
+        Buffer->cursor_pos = Buffer->text_size;
+    } else {
+        Buffer->cursor_pos = Buffer->cursor_pos + to_move;
+    }
 
     moveGap(Buffer);
 
 
     return Buffer;
 }
-
 
 GapBuffer *initBuffer(const char *str) {
     size_t str_size = strlen(str);
@@ -126,10 +128,15 @@ int main() {
     GapBuffer *Buffer = initBuffer(str);
 
     printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
 
     moveLeft(Buffer, 31);
-
     printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
+
+    moveRight(Buffer, 40);
+    printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
 
     free(Buffer->buffer);
     free(Buffer);
