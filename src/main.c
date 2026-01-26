@@ -15,6 +15,25 @@
  *
 */
 
+/*  invariants:
+ *
+ *  structural bounds:
+ *      0 <= gap_start <= gap_end <= buf_size
+ *
+ *  gap size definition:
+ *      gap_size = gap_end - gap_start
+ *
+ *  size consistency:
+ *      text_size == buf_size - gap_size
+ *
+ *  cursor validity:
+ *      cursor_pos STAYS INSIDE [0, text_size]
+ *
+ *  after moveGap():
+ *      cursor_pos == gap_start
+ *
+*/
+
 size_t GAP_SIZE = 6;
 
 typedef struct {
@@ -66,6 +85,9 @@ GapBuffer *moveGap(GapBuffer *Buffer) {
         Buffer->gap_end += move_len;
     }
 
+    Buffer->cursor_pos = Buffer->gap_start;
+
+
     return Buffer;
 }
 
@@ -77,6 +99,7 @@ GapBuffer *moveLeft(GapBuffer *Buffer, size_t to_move) {
     }
 
     moveGap(Buffer);
+
 
     return Buffer;
 }
