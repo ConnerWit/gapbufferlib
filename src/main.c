@@ -55,6 +55,38 @@ void *allocCheck(void *ptr) {
       return ptr;
 }
 
+/*  insertion logic:
+ *      str gets compared to gap size
+ *      if str is bigger, gap grows to fit str inside + GAP_SIZE
+ *      this will reallocate buffer and changes buf_size
+ *      copy str into gap_start
+ *      gap size gets reduced to 6 (fixed size)
+ *      gap_start & cursor_pos come after N
+ *
+*/
+
+GapBuffer *growGap(GapBuffer *Buffer, size_t n){
+
+
+    return Buffer;
+}
+
+GapBuffer *insert(GapBuffer *Buffer, const char *str) {
+    size_t n = strlen(str);
+    size_t gap_size = Buffer->gap_end - Buffer->gap_start;
+
+    if(n > gap_size){
+        growGap(Buffer, n);
+    }
+
+    memcpy(Buffer->buffer + Buffer->gap_start, str, n);
+    Buffer->gap_start += n;
+    Buffer->cursor_pos += n;
+
+
+    return Buffer;
+}
+
 GapBuffer *moveGap(GapBuffer *Buffer) {
     size_t gap_size = Buffer->gap_end - Buffer->gap_start;
     
