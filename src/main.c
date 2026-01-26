@@ -66,6 +66,9 @@ void *allocCheck(void *ptr) {
 */
 
 GapBuffer *growGap(GapBuffer *Buffer, size_t n){
+    size_t old_gap = Buffer->gap_end - Buffer->gap_start;
+    size_t req_gap = n + GAP_SIZE;
+    size_t new_buf_size = Buffer->buf_size + (req_gap - old_gap);
 
 
     return Buffer;
@@ -82,6 +85,7 @@ GapBuffer *insert(GapBuffer *Buffer, const char *str) {
     memcpy(Buffer->buffer + Buffer->gap_start, str, n);
     Buffer->gap_start += n;
     Buffer->cursor_pos += n;
+    Buffer->text_size += n;
 
 
     return Buffer;
