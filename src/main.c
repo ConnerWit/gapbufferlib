@@ -12,7 +12,6 @@
  *  shrinking gap
  *  cursor moves to text before deleted section
  *
- *
 */
 
 /*  invariants:
@@ -68,18 +67,45 @@ void *allocCheck(void *ptr) {
 GapBuffer *growGap(GapBuffer *Buffer, size_t n){
     size_t old_gap = Buffer->gap_end - Buffer->gap_start;
     size_t req_gap = n + GAP_SIZE;
+    if(req_gap <= old_gap) return Buffer;
     size_t new_buf_size = Buffer->buf_size + (req_gap - old_gap);
 
+    GapBuffer *NewBuffer = allocCheck(malloc(sizeof(GapBuffer)));
+    NewBuffer->buffer = allocCheck(malloc(new_buf_size));
+    // allocates only exact amount needed, for future improvements i can make it allocate more than needed to reduce overuse of growGap()
+    NewBuffer->buf_size = new_buf_size; 
+    NewBuffer->gap_start = Buffer->gap_start;
+    NewBuffer->gap_end = NewBuffer->gap_start + req_gap;
+    NewBuffer->cursor_pos = NewBuffer->gap_start;
+    NewBuffer->text_size = Buffer->text_size;
 
-    return Buffer;
+    memcpy(
+            NewBuffer->buffer,
+            Buffer->buffer,
+            NewBuffer->gap_start
+    );
+
+    memcpy(
+            NewBuffer->buffer + NewBuffer->gap_end,
+            Buffer->buffer + Buffer->gap_end,
+            Buffer->buf_size - Buffer->gap_end
+    );
+
+    free(Buffer->buffer);
+    free(Buffer);
+
+
+    return NewBuffer;
 }
 
 GapBuffer *insert(GapBuffer *Buffer, const char *str) {
     size_t n = strlen(str);
+    if(n == 0) return Buffer;
+
     size_t gap_size = Buffer->gap_end - Buffer->gap_start;
 
     if(n > gap_size){
-        growGap(Buffer, n);
+        Buffer = growGap(Buffer, n);
     }
 
     memcpy(Buffer->buffer + Buffer->gap_start, str, n);
@@ -189,11 +215,19 @@ int main() {
     printBuffer(Buffer);
     printf("%zu\n", Buffer->cursor_pos);
 
-    moveLeft(Buffer, 31);
+    moveLeft(Buffer, 10);
     printBuffer(Buffer);
     printf("%zu\n", Buffer->cursor_pos);
 
-    moveRight(Buffer, 40);
+    Buffer = insert(Buffer, "XY");
+    printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
+
+    Buffer = insert(Buffer, " | big text string test test test where is the pizza |");
+    printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
+
+    moveRight(Buffer, 50);
     printBuffer(Buffer);
     printf("%zu\n", Buffer->cursor_pos);
 
