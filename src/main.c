@@ -1,17 +1,16 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
-/* todo list
- *
- * inserting text
- *  growing gap
- *  cursor moves at end of inserted text
- *
- * deleting text
- *  shrinking gap
- *  cursor moves to text before deleted section
- *
+/*  todo list
+ *      DONE checkInvariants() function to check if invariants are being upheld 
+ *      DONE killBuffer() function to centralize free logic
+ *      develop into API, split into gap_buffer.h / gap_buffer.c
+ *      add consts to API for read-only accessibility
+ *      make GAP_SIZE configurable per buffer
+ *      improve growGap() with exponential growth & reduce realloc-ing
+ *      shrinkGap() for when gap is too big
 */
 
 /*  invariants:
@@ -33,6 +32,31 @@
  *
 */
 
+
+#ifdef DEBUG
+#define CHECK_INVARIANTS(buf, strict)                                  \
+    do {                                                               \
+        GapInvariantResult r = checkInvariants(buf, strict);           \
+        if (r != GAP_OK) {                                             \
+            fprintf(stderr, "Invariant failed: %d\n", r);              \
+            abort();                                                   \
+        }                                                              \
+    } while (0)
+#else
+#define CHECK_INVARIANTS(buf, strict) ((void)0)
+#endif
+
+typedef enum {
+    GAP_OK = 0,
+    GAP_NULL,
+    GAP_BOUNDS,
+    GAP_SIZE_MISMATCH,
+    GAP_TEXT_SIZE,
+    GAP_CURSOR_RANGE,
+    GAP_CURSOR_NOT_AT_GAP
+} GapInvariantResult;
+
+
 size_t GAP_SIZE = 6;
 
 typedef struct {
@@ -44,6 +68,37 @@ typedef struct {
     size_t cursor_pos;
 } GapBuffer;
 
+
+GapInvariantResult checkInvariants(const GapBuffer *Buffer, bool require_cursor_at_gap) {
+    if (!Buffer) return GAP_NULL;
+
+    size_t gap_size = Buffer->gap_end - Buffer->gap_start;
+
+    // structural bounds
+    if (!(Buffer->gap_start <= Buffer->gap_end &&
+            Buffer->gap_end <= Buffer->buf_size)) {
+        return GAP_BOUNDS;
+    }
+
+    // text size consistency
+    if (Buffer->text_size != Buffer->buf_size - gap_size) {
+        return GAP_TEXT_SIZE;
+    }
+
+    // cursor validity
+    if (Buffer->cursor_pos > Buffer->text_size) {
+        return GAP_CURSOR_RANGE;
+    }
+
+    if (require_cursor_at_gap &&
+            Buffer->cursor_pos != Buffer->gap_start) {
+        return GAP_CURSOR_NOT_AT_GAP;
+    }
+
+
+    return GAP_OK;
+}
+
 void *allocCheck(void *ptr) {
       if (ptr == NULL) {
             fprintf(stderr, "mem alloc fail");
@@ -54,15 +109,40 @@ void *allocCheck(void *ptr) {
       return ptr;
 }
 
-/*  insertion logic:
- *      str gets compared to gap size
- *      if str is bigger, gap grows to fit str inside + GAP_SIZE
- *      this will reallocate buffer and changes buf_size
- *      copy str into gap_start
- *      gap size gets reduced to 6 (fixed size)
- *      gap_start & cursor_pos come after N
- *
-*/
+void killBuffer(GapBuffer *Buffer) {
+    if (!Buffer) return;
+    free(Buffer->buffer);
+    free(Buffer);
+}
+
+GapBuffer *delete(GapBuffer *Buffer, size_t n) {
+    size_t max_n = Buffer->text_size - Buffer->cursor_pos;
+    if (n > max_n) {
+        n = max_n;
+    }
+
+    Buffer->gap_end += n;
+    Buffer->text_size -= n;
+
+
+    CHECK_INVARIANTS(Buffer, 1);
+    return Buffer;
+}
+
+GapBuffer *backspace(GapBuffer *Buffer, size_t n) {
+    size_t max_n = Buffer->cursor_pos;
+    if (n > max_n) {
+        n = max_n;
+    }
+
+    Buffer->gap_start -= n;
+    Buffer->cursor_pos -= n;
+    Buffer->text_size -= n;
+
+
+    CHECK_INVARIANTS(Buffer, 1);
+    return Buffer;
+}
 
 GapBuffer *growGap(GapBuffer *Buffer, size_t n){
     size_t old_gap = Buffer->gap_end - Buffer->gap_start;
@@ -91,10 +171,10 @@ GapBuffer *growGap(GapBuffer *Buffer, size_t n){
             Buffer->buf_size - Buffer->gap_end
     );
 
-    free(Buffer->buffer);
-    free(Buffer);
+    killBuffer(Buffer);
 
 
+    CHECK_INVARIANTS(NewBuffer, 1);
     return NewBuffer;
 }
 
@@ -114,6 +194,7 @@ GapBuffer *insert(GapBuffer *Buffer, const char *str) {
     Buffer->text_size += n;
 
 
+    CHECK_INVARIANTS(Buffer, 1);
     return Buffer;
 }
 
@@ -150,6 +231,7 @@ GapBuffer *moveGap(GapBuffer *Buffer) {
     Buffer->cursor_pos = Buffer->gap_start;
 
 
+    CHECK_INVARIANTS(Buffer, 1);
     return Buffer;
 }
 
@@ -194,6 +276,7 @@ GapBuffer *initBuffer(const char *str) {
     Buffer->cursor_pos = Buffer->gap_start;
 
 
+    CHECK_INVARIANTS(Buffer, 1);
     return Buffer;
 }
 
@@ -230,9 +313,25 @@ int main() {
     moveRight(Buffer, 50);
     printBuffer(Buffer);
     printf("%zu\n", Buffer->cursor_pos);
+    
+    moveLeft(Buffer, 30);
+    printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
 
-    free(Buffer->buffer);
-    free(Buffer);
+    backspace(Buffer, 5);
+    printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
+
+    delete(Buffer, 7);
+    printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
+
+    backspace(Buffer, 100644);
+    printBuffer(Buffer);
+    printf("%zu\n", Buffer->cursor_pos);
+
+
+    killBuffer(Buffer);
 
     
     return 0;
