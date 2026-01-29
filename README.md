@@ -1,10 +1,16 @@
-# Cedit is a small code editor written in C.
+# Gap Buffer Library (C)
+A simple C library implementing a gap buffer, the core data structure behind text editors.
+Supports insertion, deletion, cursor movement and dynamic resizing with strict invariants for correctness.
 
-This project is still a W.I.P. (for a long time lol). But I'm getting there, trust me.
+## Features
+- Efficient insert/delete operations
+- Cursor movement with gap tracking
+- Automatic gap growth
+- Safe memory management
+- Debug invariants
 
-## Setting up
+### Next Steps
+- Split into `.h / .c` for library use
+- Configurable gap size & improved growth/shrink strategies
 
-After cloning, simply type 'make' in the root directory to compile and run the project.
-
-(I'll probably be the only one setting this up but it's a good note to use for myself 😉)
-
+Designed as a library core for building editors or text-processing tools.
