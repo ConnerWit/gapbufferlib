@@ -1,4 +1,5 @@
 # Gap Buffer Library (C)
+**Version:** v1.0.0
 A C implementation of a gap buffer intended for use in real text editors.
 
 This library implements the core data structure used by many editors to support
