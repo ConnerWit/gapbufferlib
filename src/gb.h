@@ -1,12 +1,13 @@
 #ifndef GAP_BUFFER_H
 #define GAP_BUFFER_H
 
+#define GB_VERSION_MAJOR 1
+#define GB_VERSION_MINOR 0
+#define GB_VERSION_PATCH 0
 
 #include <stddef.h>
 
-
 typedef struct GapBuffer GapBuffer;
-
 
 GapBuffer *gb_init(const char *init_text);
 void       gb_dest(GapBuffer *gb); 
@@ -22,6 +23,5 @@ size_t gb_length(const GapBuffer *gb);
 size_t gb_cursor(const GapBuffer *gb);
 
 size_t gb_copy_text(const GapBuffer *gb, char *out, size_t out_size);
-
 
 #endif
