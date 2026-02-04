@@ -6,18 +6,14 @@
 #include <stdlib.h>
 
 
-#ifdef DEBUG
-#define CHECK_INVARIANTS(buf, strict)                                  \
-    do {                                                               \
-        GapInvariantResult r = gb_check_invariants(buf, strict);           \
-        if (r != GAP_OK) {                                             \
-            fprintf(stderr, "invariant failed: %d\n", r);              \
-            abort();                                                   \
-        }                                                              \
+#define CHECK_INVARIANTS(buf)                          \
+    do {                                                       \
+        GapInvariantResult r = gb_check_invariants(buf); \
+        if (r != GAP_OK) {                                     \
+            fprintf(stderr, "invariant failed: %d\n", r);      \
+            abort();                                           \
+        }                                                      \
     } while (0)
-#else
-#define CHECK_INVARIANTS(buf, strict) ((void)0)
-#endif
 
 typedef enum {
     GAP_OK = 0,
@@ -41,7 +37,7 @@ struct GapBuffer {
 };
 
 
-static GapInvariantResult gb_check_invariants(const GapBuffer *Buffer, bool require_cursor_at_gap) {
+static GapInvariantResult gb_check_invariants(const GapBuffer *Buffer) {
     if (!Buffer) return GAP_NULL;
 
     size_t gap_size = Buffer->gap_end - Buffer->gap_start;
@@ -61,12 +57,6 @@ static GapInvariantResult gb_check_invariants(const GapBuffer *Buffer, bool requ
     if (Buffer->cursor_pos > Buffer->text_size) {
         return GAP_CURSOR_RANGE;
     }
-
-    if (require_cursor_at_gap &&
-            Buffer->cursor_pos != Buffer->gap_start) {
-        return GAP_CURSOR_NOT_AT_GAP;
-    }
-
 
     return GAP_OK;
 }
@@ -113,10 +103,6 @@ size_t gb_copy_text(const GapBuffer *Buffer, char *out, size_t out_size) {
         after_gap = to_copy - before_gap;
     }
 
-    if (before_gap + after_gap < out_size) {
-        out[before_gap + after_gap] = '\0';
-    }
-
     memcpy(out, Buffer->buffer, before_gap);
     memcpy(out + before_gap, Buffer->buffer + Buffer->gap_end, after_gap);
 
@@ -129,61 +115,81 @@ void gb_dest(GapBuffer *Buffer) {
     free(Buffer);
 }
 
-static GapBuffer *gb_grow_gap(GapBuffer *Buffer, size_t n){
-    size_t old_gap = Buffer->gap_end - Buffer->gap_start;
-    size_t req_gap = n + GAP_SIZE;
-    if(req_gap <= old_gap) return Buffer;
-    size_t new_buf_size = Buffer->buf_size + (req_gap - old_gap);
-
-    GapBuffer *NewBuffer = gb_xmalloc(sizeof(GapBuffer));
-    NewBuffer->buffer = gb_xmalloc(new_buf_size);
-    // allocates only exact amount needed, for future improvements i can make it allocate more than needed to reduce overuse of gb_grow_gap()
-    NewBuffer->buf_size = new_buf_size; 
-    NewBuffer->gap_start = Buffer->gap_start;
-    NewBuffer->gap_end = NewBuffer->gap_start + req_gap;
-    NewBuffer->cursor_pos = NewBuffer->gap_start;
-    NewBuffer->text_size = Buffer->text_size;
-
-    memcpy(
-            NewBuffer->buffer,
-            Buffer->buffer,
-            NewBuffer->gap_start
-    );
-
-    memcpy(
-            NewBuffer->buffer + NewBuffer->gap_end,
-            Buffer->buffer + Buffer->gap_end,
-            Buffer->buf_size - Buffer->gap_end
-    );
-
-    gb_dest(Buffer);
-
-    CHECK_INVARIANTS(NewBuffer, 1);
-
-    return NewBuffer;
-}
-
-GapBuffer *gb_insert(GapBuffer *Buffer, const char *str) {
-    size_t n = strlen(str);
-    if(n == 0) return Buffer;
-
+static void gb_shrink_gap(GapBuffer *Buffer) {
     size_t gap_size = Buffer->gap_end - Buffer->gap_start;
 
-    if(n > gap_size){
-        Buffer = gb_grow_gap(Buffer, n);
+    size_t min_gap = GAP_SIZE;
+
+    if (gap_size <= min_gap) return;
+    if (gap_size <= Buffer->text_size) return;
+
+    size_t new_gap = GAP_SIZE;
+    size_t new_buf_size = Buffer->text_size + new_gap;
+
+    char *new_buf = gb_xmalloc(new_buf_size);
+
+    memcpy(new_buf, Buffer->buffer, Buffer->gap_start);
+
+    size_t tail = Buffer->text_size - Buffer->gap_start;
+    memcpy(
+            new_buf + Buffer->gap_start + new_gap,
+            Buffer->buffer + Buffer->gap_end,
+            tail
+    );
+    
+    free(Buffer->buffer);
+    Buffer->buffer = new_buf;
+    Buffer->buf_size = new_buf_size;
+    Buffer->gap_end = Buffer->gap_start + new_gap;
+
+    CHECK_INVARIANTS(Buffer);
+}
+
+static void gb_grow_gap(GapBuffer *Buffer, size_t n){
+    size_t old_gap = Buffer->gap_end - Buffer->gap_start;
+    size_t req_gap = n + GAP_SIZE;
+    if(req_gap <= old_gap) return;
+
+    size_t new_buf_size = Buffer->buf_size + (req_gap - old_gap);
+    char *new_buf = gb_xmalloc(new_buf_size);
+
+    memcpy(new_buf, Buffer->buffer, Buffer->gap_start);
+
+    size_t tail = Buffer->buf_size - Buffer->gap_end;
+    memcpy(
+            new_buf + Buffer->gap_start + req_gap,
+            Buffer->buffer + Buffer->gap_end,
+            tail
+    );
+    
+    free(Buffer->buffer);
+    Buffer->buffer = new_buf;
+    Buffer->gap_end = Buffer->gap_start + req_gap;
+    Buffer->buf_size = new_buf_size;
+
+    CHECK_INVARIANTS(Buffer);
+}
+
+GapBuffer *gb_insert(GapBuffer *Buffer, const void *data, size_t len) {
+    if(!Buffer || !data || len == 0) return Buffer;
+
+    size_t gap_size = Buffer->gap_end - Buffer->gap_start;
+    if (len > gap_size) {
+        gb_grow_gap(Buffer, len);
     }
 
-    memcpy(Buffer->buffer + Buffer->gap_start, str, n);
-    Buffer->gap_start += n;
-    Buffer->cursor_pos += n;
-    Buffer->text_size += n;
+    memcpy(Buffer->buffer + Buffer->gap_start, data, len);
+    Buffer->gap_start += len;
+    Buffer->cursor_pos += len;
+    Buffer->text_size += len;
 
-    CHECK_INVARIANTS(Buffer, 1);
-
+    CHECK_INVARIANTS(Buffer);
     return Buffer;
 }
 
-static GapBuffer *gb_move_gap(GapBuffer *Buffer) {
+// physically moves gap to the cursor position by shifting text
+// must be called before any operation that assumes cursor == gap_start
+static void gb_move_gap(GapBuffer *Buffer) {
     size_t gap_size = Buffer->gap_end - Buffer->gap_start;
     
     size_t physical_pos;
@@ -215,9 +221,7 @@ static GapBuffer *gb_move_gap(GapBuffer *Buffer) {
 
     Buffer->cursor_pos = Buffer->gap_start;
 
-    CHECK_INVARIANTS(Buffer, 1);
-
-    return Buffer;
+    CHECK_INVARIANTS(Buffer);
 }
 
 GapBuffer *gb_move_left(GapBuffer *Buffer, size_t to_move) {
@@ -255,8 +259,8 @@ GapBuffer *gb_delete(GapBuffer *Buffer, size_t n) {
     Buffer->gap_end += n;
     Buffer->text_size -= n;
 
-    CHECK_INVARIANTS(Buffer, 1);
-
+    CHECK_INVARIANTS(Buffer);
+    gb_shrink_gap(Buffer);
     return Buffer;
 }
 
@@ -272,27 +276,26 @@ GapBuffer *gb_backspace(GapBuffer *Buffer, size_t n) {
     Buffer->cursor_pos -= n;
     Buffer->text_size -= n;
 
-    CHECK_INVARIANTS(Buffer, 1);
-
+    CHECK_INVARIANTS(Buffer);
+    gb_shrink_gap(Buffer);
     return Buffer;
 }
 
 
-GapBuffer *gb_init(const char *str) {
-    size_t str_size = strlen(str);
-
+GapBuffer *gb_init(const void *data, size_t len) {
     GapBuffer *Buffer = gb_xmalloc(sizeof(GapBuffer));
-    Buffer->buf_size = str_size + GAP_SIZE;
-    Buffer->text_size = str_size;
+    Buffer->buf_size = len + GAP_SIZE;
+    Buffer->text_size = len;
     Buffer->buffer = gb_xmalloc(Buffer->buf_size);
 
-    memcpy(Buffer->buffer, str, str_size);
+    if (data && len > 0) {
+        memcpy(Buffer->buffer, data, len);
+    }
 
-    Buffer->gap_start = str_size;
-    Buffer->gap_end = str_size + GAP_SIZE;
+    Buffer->gap_start = len;
+    Buffer->gap_end = len + GAP_SIZE;
     Buffer->cursor_pos = Buffer->gap_start;
 
-    CHECK_INVARIANTS(Buffer, 1);
-
+    CHECK_INVARIANTS(Buffer);
     return Buffer;
 }
