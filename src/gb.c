@@ -120,8 +120,7 @@ static void gb_shrink_gap(GapBuffer *Buffer) {
 
     size_t min_gap = GAP_SIZE;
 
-    if (gap_size <= min_gap) return;
-    if (gap_size <= Buffer->text_size) return;
+    if (gap_size <= min_gap * 4) return;
 
     size_t new_gap = GAP_SIZE;
     size_t new_buf_size = Buffer->text_size + new_gap;
@@ -170,23 +169,6 @@ static void gb_grow_gap(GapBuffer *Buffer, size_t n){
     CHECK_INVARIANTS(Buffer);
 }
 
-GapBuffer *gb_insert(GapBuffer *Buffer, const void *data, size_t len) {
-    if(!Buffer || !data || len == 0) return Buffer;
-
-    size_t gap_size = Buffer->gap_end - Buffer->gap_start;
-    if (len > gap_size) {
-        gb_grow_gap(Buffer, len);
-    }
-
-    memcpy(Buffer->buffer + Buffer->gap_start, data, len);
-    Buffer->gap_start += len;
-    Buffer->cursor_pos += len;
-    Buffer->text_size += len;
-
-    CHECK_INVARIANTS(Buffer);
-    return Buffer;
-}
-
 // physically moves gap to the cursor position by shifting text
 // must be called before any operation that assumes cursor == gap_start
 static void gb_move_gap(GapBuffer *Buffer) {
@@ -222,6 +204,24 @@ static void gb_move_gap(GapBuffer *Buffer) {
     Buffer->cursor_pos = Buffer->gap_start;
 
     CHECK_INVARIANTS(Buffer);
+}
+
+GapBuffer *gb_insert(GapBuffer *Buffer, const void *data, size_t len) {
+    if(!Buffer || !data || len == 0) return Buffer;
+    gb_move_gap(Buffer);
+
+    size_t gap_size = Buffer->gap_end - Buffer->gap_start;
+    if (len > gap_size) {
+        gb_grow_gap(Buffer, len);
+    }
+
+    memcpy(Buffer->buffer + Buffer->gap_start, data, len);
+    Buffer->gap_start += len;
+    Buffer->cursor_pos += len;
+    Buffer->text_size += len;
+
+    CHECK_INVARIANTS(Buffer);
+    return Buffer;
 }
 
 GapBuffer *gb_move_left(GapBuffer *Buffer, size_t to_move) {
