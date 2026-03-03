@@ -37,8 +37,6 @@ clear invariants, and editor-accurate behavior rather than a minimal or academic
 
 ### Next steps / ideas
 
-- Configurable gap size and growth strategy
-- Optional gap shrinking
 - Rope structure built from gap-buffer-backed nodes for mixed-size workloads
 
 This is intended to serve as a practical, editor-grade text editing core.
